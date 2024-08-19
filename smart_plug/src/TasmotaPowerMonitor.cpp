@@ -1,7 +1,9 @@
 #include "TasmotaPowerMonitor.h"
 
 // Constructor
-TasmotaPowerMonitor::TasmotaPowerMonitor(const char* wifi_ssid, const char* wifi_password, const char* device_ip) {
+TasmotaPowerMonitor::TasmotaPowerMonitor(const char *wifi_ssid,
+                                         const char *wifi_password,
+                                         const char *device_ip) {
   ssid = wifi_ssid;
   password = wifi_password;
   tasmotaIP = device_ip;
@@ -21,12 +23,13 @@ void TasmotaPowerMonitor::begin() {
 // Method to get power consumption
 float TasmotaPowerMonitor::getPowerConsumption() {
   if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;
     HTTPClient http;
     String url = String("http://") + tasmotaIP + "/cm?cmnd=Status%208";
-    
-    http.begin(url);
+
+    http.begin(client, url);
     int httpCode = http.GET();
-    float power = -1.0;  // Default to -1.0 if unable to retrieve power
+    float power = -1.0; // Default to -1.0 if unable to retrieve power
 
     if (httpCode > 0) {
       String payload = http.getString();
@@ -35,7 +38,7 @@ float TasmotaPowerMonitor::getPowerConsumption() {
       // Parse JSON to extract power consumption value
       StaticJsonDocument<1024> jsonBuffer;
       DeserializationError error = deserializeJson(jsonBuffer, payload);
-      
+
       if (!error) {
         power = jsonBuffer["StatusSNS"]["ENERGY"]["Power"];
         Serial.print("Power Consumption: ");
@@ -51,17 +54,18 @@ float TasmotaPowerMonitor::getPowerConsumption() {
     return power;
   } else {
     Serial.println("WiFi not connected");
-    return -1.0;  // Return -1.0 if not connected to Wi-Fi
+    return -1.0; // Return -1.0 if not connected to Wi-Fi
   }
 }
 
 // Helper method to send a command to the Tasmota device
-bool TasmotaPowerMonitor::sendCommand(const String& command) {
+bool TasmotaPowerMonitor::sendCommand(const String &command) {
   if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;
     HTTPClient http;
     String url = String("http://") + tasmotaIP + "/cm?cmnd=" + command;
-    
-    http.begin(url);
+
+    http.begin(client, url);
     int httpCode = http.GET();
     http.end();
 
@@ -73,11 +77,7 @@ bool TasmotaPowerMonitor::sendCommand(const String& command) {
 }
 
 // Method to turn the switch on
-bool TasmotaPowerMonitor::turnOn() {
-  return sendCommand("Power%20On");
-}
+bool TasmotaPowerMonitor::turnOn() { return sendCommand("Power%20On"); }
 
 // Method to turn the switch off
-bool TasmotaPowerMonitor::turnOff() {
-  return sendCommand("Power%20Off");
-}
+bool TasmotaPowerMonitor::turnOff() { return sendCommand("Power%20Off"); }
