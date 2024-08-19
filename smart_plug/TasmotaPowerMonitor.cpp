@@ -9,7 +9,7 @@ TasmotaPowerMonitor::TasmotaPowerMonitor(const char* wifi_ssid, const char* wifi
 
 // Initialize Wi-Fi connection
 void TasmotaPowerMonitor::begin() {
-
+  Serial.begin(115200);
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -30,7 +30,7 @@ float TasmotaPowerMonitor::getPowerConsumption() {
 
     if (httpCode > 0) {
       String payload = http.getString();
-    //   Serial.println("Received payload: " + payload);
+      Serial.println("Received payload: " + payload);
 
       // Parse JSON to extract power consumption value
       StaticJsonDocument<1024> jsonBuffer;
@@ -53,4 +53,31 @@ float TasmotaPowerMonitor::getPowerConsumption() {
     Serial.println("WiFi not connected");
     return -1.0;  // Return -1.0 if not connected to Wi-Fi
   }
+}
+
+// Helper method to send a command to the Tasmota device
+bool TasmotaPowerMonitor::sendCommand(const String& command) {
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    String url = String("http://") + tasmotaIP + "/cm?cmnd=" + command;
+    
+    http.begin(url);
+    int httpCode = http.GET();
+    http.end();
+
+    return (httpCode == HTTP_CODE_OK);
+  } else {
+    Serial.println("WiFi not connected");
+    return false;
+  }
+}
+
+// Method to turn the switch on
+bool TasmotaPowerMonitor::turnOn() {
+  return sendCommand("Power%20On");
+}
+
+// Method to turn the switch off
+bool TasmotaPowerMonitor::turnOff() {
+  return sendCommand("Power%20Off");
 }

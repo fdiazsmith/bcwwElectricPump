@@ -11,6 +11,9 @@ class TasmotaPowerMonitor {
     const char* password;
     const char* tasmotaIP;
 
+    // Helper method to send a command to the Tasmota device
+    bool sendCommand(const String& command);
+
   public:
     // Constructor
     TasmotaPowerMonitor(const char* wifi_ssid, const char* wifi_password, const char* device_ip);
@@ -20,6 +23,12 @@ class TasmotaPowerMonitor {
 
     // Method to get power consumption
     float getPowerConsumption();
+
+    // Method to turn the switch on
+    bool turnOn();
+
+    // Method to turn the switch off
+    bool turnOff();
 };
 
 #endif
