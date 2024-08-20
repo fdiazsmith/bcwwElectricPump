@@ -15,10 +15,19 @@ void EnergyMonitor::update(float currentPower) {
   totalEnergy += currentPower * elapsedTimeHours;  // Increment total energy in Wh
   lastUpdateTime = currentTime;
 
-  float quantizedEnergy = floor(totalEnergy / quantizationThreshold) * quantizationThreshold;  // Quantize energy to the specified threshold
+  // Quantize energy to the nearest multiple of quantizationThreshold
+  float quantizedEnergy = floor(totalEnergy / quantizationThreshold) * quantizationThreshold;
+
+  // Debugging: Print current values
+  Serial.print("Total Energy: ");
+  Serial.println(totalEnergy);
+  Serial.print("Quantized Energy: ");
+  Serial.println(quantizedEnergy);
+  Serial.print("Last Quantized Energy: ");
+  Serial.println(lastQuantizedEnergy);
 
   // Check if the quantized energy has crossed the next threshold mark
-  if (quantizedEnergy != lastQuantizedEnergy) {
+  if (fabs(quantizedEnergy - lastQuantizedEnergy) >= quantizationThreshold - 0.0001) {
     Serial.println("\tThreshold crossed at: " + String(quantizedEnergy) + " Wh");
     lastQuantizedEnergy = quantizedEnergy;
     powerTick();  // Call the threshold callback if set

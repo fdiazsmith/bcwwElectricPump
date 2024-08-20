@@ -17,8 +17,9 @@ class HallSensor {
     void (*releaseCallback)() = nullptr;
 
   public:
-    // Constructor
-    HallSensor(int sensorPin);
+    bool activeState;  // Whether the active state is HIGH or LOW
+    // Constructor with activeState parameter
+    HallSensor(int sensorPin, bool activeState = HIGH);
 
     // Initialize the sensor
     void begin();

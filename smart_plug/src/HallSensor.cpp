@@ -1,13 +1,14 @@
 #include "HallSensor.h"
 
-// Constructor
-HallSensor::HallSensor(int sensorPin) {
+// Constructor with activeState parameter
+HallSensor::HallSensor(int sensorPin, bool activeState) {
   pin = sensorPin;
-  state = LOW;
-  lastState = LOW;
+  state = !activeState;  // Initialize state to the opposite of the active state
+  lastState = !activeState;  // Same for lastState
   lastDebounceTime = 0;
   debounceDelay = 0;
   debounceEnabled = false;
+  this->activeState = activeState;  // Store the active state
 }
 
 // Initialize the sensor
@@ -63,9 +64,11 @@ void HallSensor::onRelease(void (*callback)()) {
 
 // Internal method to handle state change
 void HallSensor::handleStateChange() {
-  if (lastState == LOW && state == HIGH && clickCallback != nullptr) {
-    clickCallback();  // Call the click callback if the sensor is pressed
-  } else if (lastState == HIGH && state == LOW && releaseCallback != nullptr) {
-    releaseCallback();  // Call the release callback if the sensor is released
+  if (lastState != state) {
+    if (state == activeState && clickCallback != nullptr) {
+      clickCallback();  // Call the click callback if the sensor is in active state
+    } else if (state != activeState && releaseCallback != nullptr) {
+      releaseCallback();  // Call the release callback if the sensor is in inactive state
+    }
   }
 }
