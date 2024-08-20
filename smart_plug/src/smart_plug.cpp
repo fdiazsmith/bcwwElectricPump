@@ -12,43 +12,79 @@
 TasmotaPowerMonitor tasmotaMonitor("Solar Eclipse", "baodoubletime",
                                    "192.168.4.29");
 EnergyMonitor energyMonitor;
-HallSensor hallSensor(
-    PIN_HALL_SENSOR1); // Hall sensor on pin 13 with 50ms debounce time
+HallSensor pumpEngaged(PIN_HALL_SENSOR1); // Hall sensor for pump engaged
+HallSensor resetPump(PIN_HALL_SENSOR2); // Hall sensor for pump engaged
 
-Motor motor(PIN_MOTOR_DIR, PIN_MOTOR_STEP);
+Motor motor(PIN_MOTOR_DIR, PIN_MOTOR_STEP, PIN_MOTOR_ENABLE);
 
 OneButton button(PIN_BUTTON, true);
 
 void httpTask(void *pvParameters) {
   while (true) {
-    Serial.println("Updating");
+    // Serial.println("Updating");
 
     float power = tasmotaMonitor.getPowerConsumption();
     energyMonitor.update(power);
 
-    Serial.print("Current Power: ");
-    Serial.print(power);
-    Serial.println(" W");
+    // Serial.print("Current Power: ");
+    // Serial.print(power);
+    // Serial.println(" W");
 
-    Serial.print("Total Energy Consumed: ");
-    Serial.print(energyMonitor.getTotalEnergy());
-    Serial.println(" Wh");
+    // Serial.print("Total Energy Consumed: ");
+    // Serial.print(energyMonitor.getTotalEnergy());
+    // Serial.println(" Wh");
 
     vTaskDelay(10000 / portTICK_PERIOD_MS);
   }
 
   vTaskDelete(NULL);
 }
+// Function to be called on click (press)
+void onPumpEngagedClick() {
+  Serial.println("Pump engaged!");
+  motor.enableMotor();
+  // tasmotaMonitor.turnOff();
+  
+}
 
+// Function to be called on release
+void onPumpEngagedRelease() {
+  Serial.println("Pump released!");
+  motor.disableMotor();
+  // tasmotaMonitor.turnOn();
+}
+
+void onEnergyThresholdCrossed() {
+  Serial.println("Energy threshold crossed!");
+}
 void setup() {
 
   Serial.begin(115200);
   Serial.println("BCWW - Gas Pump");
-  tasmotaMonitor.begin();
-  hallSensor.begin();
-  motor.begin();
+  // Set the callback function for energy threshold crossing
+  energyMonitor.setThresholdCallback([]() { motor.incrementPower(); });
+  // Set the quantization threshold to 0.5 Wh
+  energyMonitor.setQuantizationThreshold(0.5);
 
-  button.attachClick([]() { motor.running(!motor.running()); });
+  // TASMOTA SMART PLUG
+  tasmotaMonitor.begin();
+
+  // HALL SENSORS
+  pumpEngaged.begin();
+   // Attach the onPumpEngagedClick function to the sensor's click event
+  pumpEngaged.onClick(onPumpEngagedClick);
+  // Attach the onPumpEngagedRelease function to the sensor's release event
+  pumpEngaged.onRelease(onPumpEngagedRelease);
+  resetPump.begin();
+  // Attach the onResetPumpClick function to the sensor's click event
+  resetPump.onClick([]() { energyMonitor.reset(); });
+
+  
+  //MOTOR
+  motor.begin();
+  motor.setSpeed(200);          // Set the motor speed to 200 steps per second
+  motor.setPowerIncrement(400);  // Set the increment to 400 steps to move 1/10 of a rotation
+  motor.setDir(true);           // Set the direction to forward
   button.setup(PIN_BUTTON);
 
   // create task for the http stuff
@@ -62,25 +98,9 @@ void setup() {
 
 void loop() {
 
-  hallSensor.update();
-  // if (hallSensor.stateChanged()) {
-  //   if (hallSensor.getState() == LOW) {
-  //     Serial.println("button state LOW");
-  //     energyMonitor.reset();
-  //     if (tasmotaMonitor.turnOff()) {
-  //       Serial.println("Switch turned off");
-  //     } else {
-  //       Serial.println("Failed to turn off the switch");
-  //     }
-  //   } else {
-  //     if (tasmotaMonitor.turnOn()) {
-  //       Serial.println("Switch turned on");
-  //     } else {
-  //       Serial.println("Failed to turn on the switch");
-  //     }
-  //   }
-  // }
-
-  button.tick();
+  pumpEngaged.update();
+  resetPump.update();
   motor.update();
+  // button.tick();
+
 }

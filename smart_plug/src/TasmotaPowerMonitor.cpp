@@ -33,7 +33,7 @@ float TasmotaPowerMonitor::getPowerConsumption() {
 
     if (httpCode > 0) {
       String payload = http.getString();
-      Serial.println("Received payload: " + payload);
+      // Serial.println("Received payload: " + payload);
 
       // Parse JSON to extract power consumption value
       StaticJsonDocument<1024> jsonBuffer;
@@ -41,7 +41,7 @@ float TasmotaPowerMonitor::getPowerConsumption() {
 
       if (!error) {
         power = jsonBuffer["StatusSNS"]["ENERGY"]["Power"];
-        Serial.print("Power Consumption: ");
+        Serial.print("Tasmota: Power Consumption: ");
         Serial.print(power);
         Serial.println(" W");
       } else {

@@ -8,7 +8,6 @@ HallSensor::HallSensor(int sensorPin) {
   lastDebounceTime = 0;
   debounceDelay = 0;
   debounceEnabled = false;
-  stateChangedFlag = false;
 }
 
 // Initialize the sensor
@@ -25,7 +24,6 @@ void HallSensor::useDebounce(unsigned long debounceTime) {
 // Update the sensor state (must be called in loop)
 void HallSensor::update() {
   int reading = digitalRead(pin);
-  stateChangedFlag = false;  // Reset the stateChanged flag
 
   if (debounceEnabled) {
     if (reading != lastState) {
@@ -34,18 +32,18 @@ void HallSensor::update() {
 
     if ((millis() - lastDebounceTime) > debounceDelay) {
       if (reading != state) {
+        lastState = state;
         state = reading;
-        stateChangedFlag = true;  // State has changed
+        handleStateChange();  // Handle the state change
       }
     }
   } else {
     if (reading != state) {
+      lastState = state;
       state = reading;
-      stateChangedFlag = true;  // State has changed
+      handleStateChange();  // Handle the state change
     }
   }
-
-  lastState = state;
 }
 
 // Get the current state of the sensor
@@ -53,7 +51,21 @@ bool HallSensor::getState() const {
   return state;
 }
 
-// Check if the sensor state has changed
-bool HallSensor::stateChanged() {
-  return stateChangedFlag;
+// Attach a callback function for the click event (on press)
+void HallSensor::onClick(void (*callback)()) {
+  clickCallback = callback;
+}
+
+// Attach a callback function for the release event
+void HallSensor::onRelease(void (*callback)()) {
+  releaseCallback = callback;
+}
+
+// Internal method to handle state change
+void HallSensor::handleStateChange() {
+  if (lastState == LOW && state == HIGH && clickCallback != nullptr) {
+    clickCallback();  // Call the click callback if the sensor is pressed
+  } else if (lastState == HIGH && state == LOW && releaseCallback != nullptr) {
+    releaseCallback();  // Call the release callback if the sensor is released
+  }
 }

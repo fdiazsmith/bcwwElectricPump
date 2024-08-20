@@ -11,7 +11,10 @@ class HallSensor {
     unsigned long lastDebounceTime;  // Time the sensor state last changed
     unsigned long debounceDelay;  // Debounce delay in milliseconds
     bool debounceEnabled;  // Flag to indicate if debounce is enabled
-    bool stateChangedFlag;  // Flag to indicate if the state has changed
+
+    // Function pointers for the click and release events
+    void (*clickCallback)() = nullptr;
+    void (*releaseCallback)() = nullptr;
 
   public:
     // Constructor
@@ -31,6 +34,16 @@ class HallSensor {
 
     // Enable debounce and set the debounce delay
     void useDebounce(unsigned long debounceTime);
+
+    // Attach a callback function for the click event (on press)
+    void onClick(void (*callback)());
+
+    // Attach a callback function for the release event
+    void onRelease(void (*callback)());
+
+  private:
+    // Internal method to handle state change
+    void handleStateChange();
 };
 
 #endif
