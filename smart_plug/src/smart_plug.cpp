@@ -16,6 +16,7 @@ HallSensor pumpEngaged(PIN_HALL_SENSOR1, LOW); // Hall sensor for pump engaged
 HallSensor resetPump(PIN_HALL_SENSOR2, LOW); // Hall sensor for pump engaged
 
 Motor motor(PIN_MOTOR_DIR, PIN_MOTOR_STEP, PIN_MOTOR_ENABLE);
+// Motor motor(PIN_MOTOR_DIR, PIN_MOTOR_STEP);
 
 OneButton button(PIN_BUTTON, true);
 
@@ -40,7 +41,7 @@ void onPumpEngagedClick() {
   Serial.println("Pump engaged!");
   // motor.enableMotor();
   tasmotaMonitor.turnOn();
-  motor.running(true);
+  // motor.running(true);//test
   
 }
 
@@ -49,7 +50,7 @@ void onPumpEngagedRelease() {
   Serial.println("Pump released!");
   // motor.disableMotor();
   tasmotaMonitor.turnOff();
-    motor.running(false);
+    // motor.running(false);//test
 }
 
 
@@ -58,7 +59,7 @@ void setup() {
   Serial.begin(115200);
   Serial.println("BCWW - Gas Pump");
   // Set the callback function for energy threshold crossing
-  // energyMonitor.setThresholdCallback([]() { motor.incrementPower(); });
+  energyMonitor.setThresholdCallback([]() { motor.incrementPower(); });
 
   // Set the quantization threshold to 0.1 Wh
   energyMonitor.setQuantizationThreshold(0.1);
@@ -78,11 +79,12 @@ void setup() {
 
   
   //MOTOR
-  // motor.begin();
-  // motor.setSpeed(200);          // Set the motor speed to 200 steps per second
-  // motor.setPowerIncrement(400);  // Set the increment to 400 steps to move 1/10 of a rotation
-  // motor.setDir(true);           // Set the direction to forward
+  motor.begin();
+  motor.setSpeed(1600);          // Set the motor speed to 200 steps per second
+  motor.setPowerIncrement(100);  // Set the increment to 400 steps to move 1/10 of a rotation
+  motor.setDir(false);           // Set the direction to forward
   button.setup(PIN_BUTTON);
+
 
   // create task for the http stuff
   xTaskCreate(httpTask,   /* Function to implement the task */
